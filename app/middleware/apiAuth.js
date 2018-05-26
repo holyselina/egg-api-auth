@@ -1,4 +1,5 @@
 'use strict';
+const minimatch = require('minimatch');
 module.exports = options => {
   return async function(ctx, next) {
     const { clients, signKey, nonceStore, errorStatus, timestampLimit } = options;
@@ -26,6 +27,35 @@ module.exports = options => {
         ctx.throw(errorStatus, 'nonce repeat');
       }
       await nonceStore.add(params.nonce, client);
+    }
+    let dps = client.denyPaths;
+    if (dps) {
+      if (!Array.isArray(dps)) {
+        dps = [ dps ];
+      }
+      for (const dp of dps) {
+        if (minimatch(ctx.path, dp)) {
+          ctx.throw(errorStatus, 'not path auth');
+        }
+      }
+    }
+    let aps = client.allowPaths;
+    if (aps) {
+      if (!Array.isArray(aps)) {
+        aps = [ aps ];
+      }
+      let match = false;
+      for (const ap of aps) {
+        if (match) {
+          break;
+        }
+        if (minimatch(ctx.path, ap)) {
+          match = true;
+        }
+      }
+      if (!match) {
+        ctx.throw(errorStatus, 'not path auth');
+      }
     }
     ctx.authedClient = client;
     await next();

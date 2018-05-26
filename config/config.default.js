@@ -9,5 +9,5 @@ exports.apiAuth = {
   signKey: 'sign',
   errorStatus: 401,
   timestampLimit: 600000,
-  clients: []
+  clients: [],
 };

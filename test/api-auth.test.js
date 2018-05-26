@@ -64,4 +64,53 @@ describe('test/api-auth.test.js', () => {
       .get('/').query(params)
       .expect(401);
   });
+
+  it('allowPaths', async () => {
+    const ctx = app.mockContext();
+    const c = ctx.app.config.apiAuth.clients[1];
+    const params = {
+      clientID: c.clientID,
+      timestamp: new Date().getTime(),
+      nonce: Math.random(),
+    };
+    const sign = ctx.helper.signMd5(params, c.accessKey);
+    params.sign = sign;
+    await app.httpRequest()
+      .get('/p2').query(params)
+      .expect(401);
+    await app.httpRequest()
+      .get('/p3').query(params)
+      .expect(401);
+    await app.httpRequest()
+      .get('/p1').query(params)
+      .expect(200);
+    await app.httpRequest()
+      .get('/p1/p1').query(params)
+      .expect(200);
+  });
+
+  it('denyPaths', async () => {
+    const ctx = app.mockContext();
+    const c = ctx.app.config.apiAuth.clients[2];
+    const params = {
+      clientID: c.clientID,
+      timestamp: new Date().getTime(),
+      nonce: Math.random(),
+    };
+    const sign = ctx.helper.signMd5(params, c.accessKey);
+    params.sign = sign;
+    await app.httpRequest()
+      .get('/p3').query(params)
+      .expect(401);
+    await app.httpRequest()
+      .get('/p4').query(params)
+      .expect(401);
+    await app.httpRequest()
+      .get('/p1').query(params)
+      .expect(200);
+    await app.httpRequest()
+      .get('/p1/p1').query(params)
+      .expect(200);
+  });
+
 });
