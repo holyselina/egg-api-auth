@@ -23,10 +23,10 @@ module.exports = options => {
       ctx.throw(errorStatus, 'timestampLimit error');
     }
     if (nonceStore && nonceStore.check && nonceStore.add) {
-      if (await nonceStore.check(params.nonce, client) !== true) {
+      if (await nonceStore.check(ctx, params.nonce, client) !== true) {
         ctx.throw(errorStatus, 'nonce repeat');
       }
-      await nonceStore.add(params.nonce, client);
+      await nonceStore.add(ctx, params.nonce, client);
     }
     let dps = client.denyPaths;
     if (dps) {
