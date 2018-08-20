@@ -3,6 +3,10 @@
 exports.keys = '123456';
 
 exports.apiAuth = {
+  async log(ctx, client) {
+    ctx.__Loged = true;
+    console.log('log success:', client.clientID, ctx.path);
+  },
   clients: [
     {
       clientID: 'test0',

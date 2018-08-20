@@ -1,76 +1,12 @@
 # egg-api-auth
 
-[![NPM version][npm-image]][npm-url]
-[![build status][travis-image]][travis-url]
-[![Test coverage][codecov-image]][codecov-url]
-[![David deps][david-image]][david-url]
-[![Known Vulnerabilities][snyk-image]][snyk-url]
-[![npm download][download-image]][download-url]
-
-[npm-image]: https://img.shields.io/npm/v/egg-api-auth.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/egg-api-auth
-[travis-image]: https://img.shields.io/travis/eggjs/egg-api-auth.svg?style=flat-square
-[travis-url]: https://travis-ci.org/eggjs/egg-api-auth
-[codecov-image]: https://img.shields.io/codecov/c/github/eggjs/egg-api-auth.svg?style=flat-square
-[codecov-url]: https://codecov.io/github/eggjs/egg-api-auth?branch=master
-[david-image]: https://img.shields.io/david/eggjs/egg-api-auth.svg?style=flat-square
-[david-url]: https://david-dm.org/eggjs/egg-api-auth
-[snyk-image]: https://snyk.io/test/npm/egg-api-auth/badge.svg?style=flat-square
-[snyk-url]: https://snyk.io/test/npm/egg-api-auth
-[download-image]: https://img.shields.io/npm/dm/egg-api-auth.svg?style=flat-square
-[download-url]: https://npmjs.org/package/egg-api-auth
-
-<!--
-Description here.
--->
-
-## 依赖说明
-
-### 依赖的 egg 版本
-
-egg-api-auth 版本 | egg 1.x
---- | ---
-1.x | 😁
-0.x | ❌
-
-### 依赖的插件
-<!--
-
-如果有依赖其它插件，请在这里特别说明。如
-
-- security
-- multipart
-
--->
-
-## 开启插件
-
-```js
-// config/plugin.js
-exports.apiAuth = {
-  enable: true,
-  package: 'egg-api-auth',
-};
-```
-
-## 使用场景
-
-- Why and What: 描述为什么会有这个插件，它主要在完成一件什么事情。
-尽可能描述详细。
-- How: 描述这个插件是怎样使用的，具体的示例代码，甚至提供一个完整的示例，并给出链接。
-
-## 详细配置
-
-请到 [config/config.default.js](config/config.default.js) 查看详细配置项说明。
-
-## 单元测试
-
-<!-- 描述如何在单元测试中使用此插件，例如 schedule 如何触发。无则省略。-->
-
-## 提问交流
-
-请到 [egg issues](https://github.com/eggjs/egg/issues) 异步交流。
-
-## License
-
-[MIT](LICENSE)
+签名规则如下:
+  1.我们会颁发给调用者一个clientID和accessKey,也就是调用者ID和秘钥.
+  2.每个接口除了业务参数外需要传递公共参数cilentID和timestamp以及nonce,
+    timestamp为当前时间戳,格式为整数:new Date().getTime(),nonce为随机数,随机数是为了防止重放攻击
+  3.请求接口时候,将所有请求参数(包括公共参数)集合按照参数名ASCII码从小到大排序,
+    然后使用URL键值对的格式(即key1=value1&key2=value2…)拼接成字符串<stringA>.
+  4.在<stringA>字符串的最后拼接上<accessKey>(也就是颁发给调用者的秘钥)得到<stringSignTemp>字符串,并对<stringSignTemp>进行MD5运算,
+  再将得到的MD5字符串所有字符转换为大写,得到签名的值<signValue>.
+  5.将签名的值<signValue>以参数名称sign附加在请求参数中.
+ 

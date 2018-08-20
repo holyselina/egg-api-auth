@@ -2,8 +2,11 @@
 const minimatch = require('minimatch');
 module.exports = options => {
   return async function(ctx, next) {
-    const { clients, signKey, nonceStore, errorStatus, timestampLimit } = options;
-    const params = Object.assign({}, ctx.query, ctx.request.body, ctx.params);
+    if (ctx.authedClient) {
+      return await next();
+    }
+    const { clients, signKey, nonceStore, errorStatus, timestampLimit, log } = options;
+    const params = ctx.helper.getSignParams();
     if (!params.clientID || !params[signKey] || !params.timestamp) {
       ctx.throw(errorStatus, 'auth params lost');
     }
@@ -58,6 +61,9 @@ module.exports = options => {
       }
     }
     ctx.authedClient = client;
+    if (typeof log === 'function') {
+      await log(ctx, client);
+    }
     await next();
   };
 };
