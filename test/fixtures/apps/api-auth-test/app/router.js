@@ -14,4 +14,6 @@ module.exports = app => {
   router.get('/p3', controller.home.index);
 
   router.get('/p4', controller.home.index);
+
+  router.get('/ignore', controller.home.index);
 };

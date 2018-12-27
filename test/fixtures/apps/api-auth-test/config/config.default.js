@@ -22,5 +22,6 @@ exports.apiAuth = {
       denyPaths: [ '/p3', '/p4' ],
     },
   ],
+  ignorePaths: [ '/ignore', '/ignore/xxx' ],
 };
 

@@ -14,6 +14,12 @@ describe('test/api-auth.test.js', () => {
   after(() => app.close());
   afterEach(mock.restore);
 
+  it('ignore auth', () => {
+    return app.httpRequest()
+      .get('/ignore')
+      .expect(200);
+  });
+
   it('not auth', () => {
     return app.httpRequest()
       .get('/')

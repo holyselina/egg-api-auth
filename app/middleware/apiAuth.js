@@ -5,7 +5,14 @@ module.exports = options => {
     if (ctx.authedClient) {
       return await next();
     }
-    const { clients, signKey, nonceStore, errorStatus, timestampLimit, log } = options;
+    const { ignorePaths, clients, signKey, nonceStore, errorStatus, timestampLimit, log } = options;
+    if (ignorePaths) {
+      for (const inp of typeof ignorePaths === 'string' ? [ ignorePaths ] : ignorePaths) {
+        if (minimatch(ctx.path, inp)) {
+          return await next();
+        }
+      }
+    }
     const params = ctx.helper.getSignParams();
     if (!params.clientID || !params[signKey] || !params.timestamp) {
       ctx.throw(errorStatus, 'auth params lost');

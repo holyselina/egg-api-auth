@@ -10,4 +10,5 @@ exports.apiAuth = {
   errorStatus: 401,
   timestampLimit: 600000,
   clients: [],
+  ignorePaths: null,
 };
