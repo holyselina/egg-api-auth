@@ -11,4 +11,5 @@ exports.apiAuth = {
   timestampLimit: 600000,
   clients: [],
   ignorePaths: null,
+  timestampFormat: null,
 };

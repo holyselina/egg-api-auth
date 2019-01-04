@@ -3,6 +3,8 @@
 exports.keys = '123456';
 
 exports.apiAuth = {
+  signUtil: {
+  },
   async log(ctx, client) {
     ctx.__Loged = true;
     console.log('log success:', client.clientID, ctx.path);
@@ -23,5 +25,11 @@ exports.apiAuth = {
     },
   ],
   ignorePaths: [ '/ignore', '/ignore/xxx' ],
+};
+
+
+exports.logger = {
+  level: 'ERROR',
+  consoleLevel: 'ERROR',
 };
 

@@ -1,11 +1,15 @@
 'use strict';
 const minimatch = require('minimatch');
+const moment = require('moment');
+const util = require('../util');
 module.exports = options => {
+  const { signUtil = {} } = options;
+  Object.assign(util, signUtil);
   return async function(ctx, next) {
     if (ctx.authedClient) {
       return await next();
     }
-    const { ignorePaths, clients, signKey, nonceStore, errorStatus, timestampLimit, log } = options;
+    const { ignorePaths, clients, signKey, nonceStore, errorStatus, timestampLimit, log, timestampFormat } = options;
     if (ignorePaths) {
       for (const inp of typeof ignorePaths === 'string' ? [ ignorePaths ] : ignorePaths) {
         if (minimatch(ctx.path, inp)) {
@@ -13,7 +17,8 @@ module.exports = options => {
         }
       }
     }
-    const params = ctx.helper.getSignParams();
+    const { getSignParams, stringifyParams, sign } = util;
+    const params = getSignParams(ctx);
     if (!params.clientID || !params[signKey] || !params.timestamp) {
       ctx.throw(errorStatus, 'auth params lost');
     }
@@ -21,12 +26,28 @@ module.exports = options => {
     if (!client) {
       ctx.throw(errorStatus, 'clientID error');
     }
-    if (!ctx.helper.validateSign(params, client.accessKey)) {
+    const signVal = params[signKey];
+    delete params[signKey];
+    const strParams = stringifyParams(params);
+    if (sign(strParams, client.accessKey) !== signVal) {
       ctx.throw(errorStatus, 'sign error');
     }
-    const tp = parseInt(params.timestamp);
-    if (isNaN(tp)) {
-      ctx.throw(errorStatus, 'timestamp error');
+    let tp,
+      tf = params.timestampFormat || timestampFormat;
+    if (tf === 'number') {
+      tf = null;
+    }
+    if (!tf) {
+      tp = parseInt(params.timestamp);
+      if (isNaN(tp)) {
+        ctx.throw(errorStatus, 'timestamp error');
+      }
+    } else {
+      tp = moment(params.timestamp, tf);
+      if (!tp.isValid()) {
+        ctx.throw(errorStatus, 'timestamp error');
+      }
+      tp = tp.valueOf();
     }
     const diff = new Date().getTime() - tp;
     if (diff > timestampLimit || diff < -timestampLimit) {

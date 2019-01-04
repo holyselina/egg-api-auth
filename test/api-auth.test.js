@@ -1,7 +1,8 @@
 'use strict';
 
 const mock = require('egg-mock');
-
+const moment = require('moment');
+const { signParams } = require('..');
 describe('test/api-auth.test.js', () => {
   let app;
   before(() => {
@@ -31,11 +32,12 @@ describe('test/api-auth.test.js', () => {
     const c = ctx.app.config.apiAuth.clients[0];
     const params = {
       clientID: c.clientID,
-      timestamp: new Date().getTime(),
+      timestamp: moment().format('YYYY-MM-DD HH:mm:ss'), // new Date().getTime(),
+      timestampFormat: 'YYYY-MM-DD HH:mm:ss',
       nonce: Math.random(),
     };
-    const sign = ctx.helper.signMd5(params, c.accessKey);
-    params.sign = sign;
+    // const sign = ctx.helper.signMd5(params, c.accessKey);
+    signParams(params, c.accessKey);
     return app.httpRequest()
       .get('/').query(params)
       .expect(200);
@@ -49,8 +51,8 @@ describe('test/api-auth.test.js', () => {
       timestamp: new Date().getTime() - ctx.app.config.apiAuth.timestampLimit - 1000,
       nonce: Math.random(),
     };
-    const sign = ctx.helper.signMd5(params, c.accessKey);
-    params.sign = sign;
+    // const sign = ctx.helper.signMd5(params, c.accessKey);
+    signParams(params, c.accessKey);
     return app.httpRequest()
       .get('/').query(params)
       .expect(401);
@@ -64,8 +66,8 @@ describe('test/api-auth.test.js', () => {
       timestamp: new Date().getTime() + ctx.app.config.apiAuth.timestampLimit + 1000,
       nonce: Math.random(),
     };
-    const sign = ctx.helper.signMd5(params, c.accessKey);
-    params.sign = sign;
+    // const sign = ctx.helper.signMd5(params, c.accessKey);
+    signParams(params, c.accessKey);
     return app.httpRequest()
       .get('/').query(params)
       .expect(401);
@@ -79,8 +81,8 @@ describe('test/api-auth.test.js', () => {
       timestamp: new Date().getTime(),
       nonce: Math.random(),
     };
-    const sign = ctx.helper.signMd5(params, c.accessKey);
-    params.sign = sign;
+    // const sign = ctx.helper.signMd5(params, c.accessKey);
+    signParams(params, c.accessKey);
     await app.httpRequest()
       .get('/p2').query(params)
       .expect(401);
@@ -103,8 +105,8 @@ describe('test/api-auth.test.js', () => {
       timestamp: new Date().getTime(),
       nonce: Math.random(),
     };
-    const sign = ctx.helper.signMd5(params, c.accessKey);
-    params.sign = sign;
+    // const sign = ctx.helper.signMd5(params, c.accessKey);
+    signParams(params, c.accessKey);
     await app.httpRequest()
       .get('/p3').query(params)
       .expect(401);
