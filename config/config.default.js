@@ -12,4 +12,8 @@ exports.apiAuth = {
   clients: [],
   ignorePaths: null,
   timestampFormat: null,
+  async findClient(ctx, clientID, clients) {
+    const [ client ] = clients.filter(c => c.clientID === clientID);
+    return client;
+  },
 };

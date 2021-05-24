@@ -9,8 +9,19 @@ module.exports = options => {
     if (ctx.authedClient) {
       return await next();
     }
-    const { ignorePaths, clients, signKey, nonceStore, errorStatus, timestampLimit, log, timestampFormat } = options;
-    if (ignorePaths) {
+    const { includedPaths, ignorePaths, clients, signKey, nonceStore, errorStatus, timestampLimit, log, timestampFormat, findClient } = options;
+    if (includedPaths) {
+      let match = false;
+      for (const inp of typeof includedPaths === 'string' ? [ includedPaths ] : includedPaths) {
+        if (minimatch(ctx.path, inp)) {
+          match = true;
+          break;
+        }
+      }
+      if (!match) {
+        return await next();
+      }
+    } else if (ignorePaths) {
       for (const inp of typeof ignorePaths === 'string' ? [ ignorePaths ] : ignorePaths) {
         if (minimatch(ctx.path, inp)) {
           return await next();
@@ -22,7 +33,7 @@ module.exports = options => {
     if (!params.clientID || !params[signKey] || !params.timestamp) {
       ctx.throw(errorStatus, 'auth params lost');
     }
-    const [ client ] = clients.filter(c => c.clientID === params.clientID);
+    const client = await findClient(ctx, params.clientID, clients); // clients.filter(c => c.clientID === params.clientID);
     if (!client) {
       ctx.throw(errorStatus, 'clientID error');
     }
