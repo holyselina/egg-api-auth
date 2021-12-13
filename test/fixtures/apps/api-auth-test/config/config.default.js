@@ -23,6 +23,11 @@ exports.apiAuth = {
       // allowPaths:'/p1/*',
       denyPaths: [ '/p3', '/p4' ],
     },
+    {
+      clientID: 'test3',
+      accessKey: 'deaeaweaweawe',
+      type: 'simple',
+    },
   ],
   ignorePaths: [ '/ignore', '/ignore/xxx' ],
 };

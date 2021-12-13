@@ -27,6 +27,20 @@ describe('test/api-auth.test.js', () => {
       .expect(401);
   });
 
+  it('simple', () => {
+    const ctx = app.mockContext();
+    const c = ctx.app.config.apiAuth.clients[3];
+    const params = {
+      clientID: c.clientID,
+      type: c.type,
+      accessKey: c.accessKey,
+      nonce: Math.random(),
+    };
+    return app.httpRequest()
+      .get('/').query(params)
+      .expect(200);
+  });
+
   it('pass auth', () => {
     const ctx = app.mockContext();
     const c = ctx.app.config.apiAuth.clients[0];

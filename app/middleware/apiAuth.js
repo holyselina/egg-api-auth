@@ -2,41 +2,14 @@
 const minimatch = require('minimatch');
 const moment = require('moment');
 const util = require('../util');
-module.exports = options => {
-  const { signUtil = {} } = options;
-  Object.assign(util, signUtil);
-  return async function(ctx, next) {
-    if (ctx.authedClient) {
-      return await next();
-    }
-    const { includedPaths, ignorePaths, clients, signKey, nonceStore, errorStatus, timestampLimit, log, timestampFormat, findClient } = options;
-    if (includedPaths) {
-      let match = false;
-      for (const inp of typeof includedPaths === 'string' ? [ includedPaths ] : includedPaths) {
-        if (minimatch(ctx.path, inp)) {
-          match = true;
-          break;
-        }
-      }
-      if (!match) {
-        return await next();
-      }
-    } else if (ignorePaths) {
-      for (const inp of typeof ignorePaths === 'string' ? [ ignorePaths ] : ignorePaths) {
-        if (minimatch(ctx.path, inp)) {
-          return await next();
-        }
-      }
-    }
-    const { getSignParams, stringifyParams, sign } = util;
-    const params = getSignParams(ctx);
-    if (!params.clientID || !params[signKey] || !params.timestamp) {
+
+const checkers = {
+  md5(ctx, client, params, options) {
+    const { signKey, timestampFormat, errorStatus, timestampLimit } = options;
+    if (!params[signKey] || !params.timestamp) {
       ctx.throw(errorStatus, 'auth params lost');
     }
-    const client = await findClient(ctx, params.clientID, clients); // clients.filter(c => c.clientID === params.clientID);
-    if (!client) {
-      ctx.throw(errorStatus, 'clientID error');
-    }
+    const { stringifyParams, sign } = util;
     const signVal = params[signKey];
     delete params[signKey];
     const strParams = stringifyParams(params);
@@ -64,6 +37,59 @@ module.exports = options => {
     if (diff > timestampLimit || diff < -timestampLimit) {
       ctx.throw(errorStatus, 'timestampLimit error');
     }
+  },
+  simple(ctx, client, params, options) {
+    const { errorStatus } = options;
+    if (!params.accessKey) {
+      ctx.throw(errorStatus, 'accessKey lost');
+    }
+    if (client.accessKey !== params.accessKey) {
+      ctx.throw(errorStatus, 'accessKey error');
+    }
+  },
+};
+
+module.exports = options => {
+  const { signUtil = {} } = options;
+  Object.assign(util, signUtil);
+  return async function(ctx, next) {
+    if (ctx.authedClient) {
+      return await next();
+    }
+    const { includedPaths, ignorePaths, clients, nonceStore, errorStatus, log, findClient } = options;
+    if (includedPaths) {
+      let match = false;
+      for (const inp of typeof includedPaths === 'string' ? [ includedPaths ] : includedPaths) {
+        if (minimatch(ctx.path, inp)) {
+          match = true;
+          break;
+        }
+      }
+      if (!match) {
+        return await next();
+      }
+    } else if (ignorePaths) {
+      for (const inp of typeof ignorePaths === 'string' ? [ ignorePaths ] : ignorePaths) {
+        if (minimatch(ctx.path, inp)) {
+          return await next();
+        }
+      }
+    }
+    const { getSignParams } = util;
+    const params = getSignParams(ctx);
+    if (!params.clientID) {
+      ctx.throw(errorStatus, 'clientID lost');
+    }
+    const client = await findClient(ctx, params.clientID, clients); // clients.filter(c => c.clientID === params.clientID);
+    if (!client) {
+      ctx.throw(errorStatus, 'clientID error');
+    }
+    const type = client.type || 'md5';
+    const checker = checkers[type];
+    if (!checker) {
+      ctx.throw(errorStatus, 'type error');
+    }
+    checker(ctx, client, params, options);
     if (nonceStore && nonceStore.check && nonceStore.add) {
       if (await nonceStore.check(ctx, params.nonce, client) !== true) {
         ctx.throw(errorStatus, 'nonce repeat');
